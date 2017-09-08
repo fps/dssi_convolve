@@ -1,0 +1,46 @@
+GUI_COMPILE_FLAGS = -Wall `pkg-config dssi --cflags` `pkg-config gtk+-2.0 --cflags` `pkg-config libglade-2.0 --cflags` `pkg-config liblo --cflags` -D_GNU_SOURCE -g -DPREFIX=\"$(PREFIX)\"
+
+GUI_LINK_FLAGS    = `pkg-config libglade-2.0 --cflags --libs`  `pkg-config liblo --libs` `pkg-config gtk+ --libs` -export-dynamic
+
+
+GUI_TARGET  = dssi_convolve_gtk
+GUI_TARGET_PREFIX  = dssi_convolve
+GUI_TARGET_SUFFIX  = _gtk
+
+GUI_STUFF   = dssi_convolve_gtk 
+GUI_GLADE   = $(GUI_TARGET).glade
+GUI_LOGO    = $(GUI_TARGET).xpm
+GUI_OBJECTS = $(GUI_STUFF:%=%.o)
+GUI_SOURCES = $(GUI_STUFF:%=%.c)
+GUI_HEADERS = $(GUI_STUFF:%=%.h)
+
+CHANNELS = 1 2 4 6
+
+all: $(GUI_TARGET)
+
+
+$(GUI_TARGET): $(GUI_OBJECTS)
+	$(CC) -o $(GUI_TARGET) $(GUI_OBJECTS) $(GUI_LINK_FLAGS)
+
+$(GUI_OBJECTS): %.o: %.c
+	$(CC) -c $< $(GUI_COMPILE_FLAGS)
+
+
+.PHONY: clean
+clean:
+	rm -f $(GUI_TARGET) *~ $(GUI_OBJECTS) core* *.lst
+
+.PHONY: install
+install: $(GUI_TARGET)
+	install -d $(PREFIX)/lib/dssi/dssi_convolve/
+	install -d $(PREFIX)/share/dssi_convolve/
+	install $(GUI_TARGET) $(PREFIX)/lib/dssi/dssi_convolve/$(GUI_TARGET)
+	install $(GUI_GLADE) $(PREFIX)/share/dssi_convolve/
+	install $(GUI_LOGO) $(PREFIX)/share/dssi_convolve/
+.PHONY: install_links
+install_links:
+	$(foreach nch,$(CHANNELS), ln -s $(PREFIX)/lib/dssi/dssi_convolve/$(GUI_TARGET) $(PREFIX)/lib/dssi/dssi_convolve/$(GUI_TARGET_PREFIX)$(nch)ch$(GUI_TARGET_SUFFIX) || true;)
+
+	$(foreach nch,$(CHANNELS), ln -s $(PREFIX)/lib/dssi/dssi_convolve/ $(PREFIX)/lib/dssi/dssi_convolve$(nch)ch || true;)
+
+

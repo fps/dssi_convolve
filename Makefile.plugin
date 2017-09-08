@@ -1,0 +1,32 @@
+PLUGIN_COMPILE_FLAGS = -Wall `pkg-config dssi --cflags` `pkg-config sndfile --cflags` `pkg-config samplerate --cflags` -I/usr/local/include -D_GNU_SOURCE -O2
+
+PLUGIN_COMPILE_FLAGS += -DCHANNELS=$(CHANNELS) -DLADSPA_ID=290$(CHANNELS) -DNAME='"Conv$(CHANNELS)ch."'
+
+PLUGIN_LINK_FLAGS    = -nostartfiles -shared `pkg-config sndfile --libs` `pkg-config samplerate --libs` -lconvolve -lstdc++ -lm -pthread
+
+PLUGIN_TARGET = dssi_convolve$(CHANNELS)ch.so
+
+PLUGIN_SOURCE = dssi_convolve.c
+PLUGIN_OBJECT = dssi_convolve$(CHANNELS).o
+
+all: $(PLUGIN_TARGET)
+
+
+$(PLUGIN_TARGET): $(PLUGIN_OBJECT)
+	$(CC) -o $(PLUGIN_TARGET) $(PLUGIN_LINK_FLAGS) $(PLUGIN_OBJECT)
+
+#.PHONY: $(PLUGIN_OBJECTS)
+$(PLUGIN_OBJECT):  $(PLUGIN_SOURCE)
+	$(CC) -c -o $(PLUGIN_OBJECT) $(PLUGIN_COMPILE_FLAGS) $(PLUGIN_SOURCE)
+ 
+
+.PHONY: clean
+clean:
+	rm -f $(PLUGIN_TARGET) *~ $(PLUGIN_OBJECT) core* *.lst
+
+.PHONY: install
+install: $(PLUGIN_TARGET)
+	install -d $(PREFIX)/lib/dssi/
+	install -d $(PREFIX)/share/dssi_convolve/
+	install $(PLUGIN_TARGET) $(PREFIX)/lib/dssi/
+
